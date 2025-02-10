@@ -1,0 +1,23 @@
+{
+    "version": 1,
+    "author": "Davi BC",
+    "editor": "wokwi",
+    "parts": [
+      {
+        "type": "board-pi-pico-w",
+        "id": "pico",
+        "top": 0,
+        "left": 0,
+        "attrs": { "builder": "pico-sdk" }
+      },
+      { "type": "wokwi-servo", "id": "servo1", "top": 17.2, "left": 153.6, "attrs": {} }
+    ],
+    "connections": [
+      [ "pico:GP0", "$serialMonitor:RX", "", [] ],
+      [ "pico:GP1", "$serialMonitor:TX", "", [] ],
+      [ "pico:GND.8", "servo1:GND", "black", [ "h0" ] ],
+      [ "pico:3V3", "servo1:V+", "red", [ "h71.06", "v25.45" ] ],
+      [ "pico:GP22", "servo1:PWM", "blue", [ "h61.46", "v-32.25" ] ]
+    ],
+    "dependencies": {}
+  }
