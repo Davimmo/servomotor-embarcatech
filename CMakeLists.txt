@@ -54,8 +54,9 @@ target_include_directories(servomotor PRIVATE
 )
 
 # Add any user requested libraries
-target_link_libraries(servomotor 
-        
+target_link_libraries(servomotor
+    pico_stdlib
+    hardware_pwm
         )
 
 pico_add_extra_outputs(servomotor)
