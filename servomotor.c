@@ -26,7 +26,6 @@ void pwm_setup()
 
 //função principal
 int main(){
-    sleep_ms(2000);
     stdio_init_all(); //inicializa o sistema padrão de I/O
     
     pwm_setup(); //configura o PWM
