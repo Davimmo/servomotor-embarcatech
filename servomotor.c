@@ -1,53 +1,66 @@
 #include <stdio.h> //biblioteca padrão da linguagem C
 #include "pico/stdlib.h" //subconjunto central de bibliotecas do SDK Pico
+#include "pico/time.h" //biblioteca para gerenciamento de tempo
+#include "hardware/irq.h" //biblioteca para gerenciamento de interrupções
 #include "hardware/pwm.h" //biblioteca para controlar o hardware de PWM
 
-#define PWM_servo 22 //pino do LED conectado a GPIO como PWM
-const uint16_t WRAP_PERIOD = 24999; //valor máximo do contador - WRAP
-const float PWM_DIVISER = 100.0; //divisor do clock para o PWM
-const uint16_t SERVO_STEP = 5000; //passo de incremento/decremento para o duty cycle do LED
-uint16_t servo_level = 625; //nível inicial do pwm (duty cycle)
+#define LEDPin 12 //pino do LED conectado a GPIO como PWM
 
-//função para configurar o módulo PWM
-void pwm_setup()
-{
-    gpio_set_function(PWM_servo, GPIO_FUNC_PWM); //habilitar o pino GPIO como PWM
-    uint slice = pwm_gpio_to_slice_num(PWM_servo); //obter o canal PWM da GPIO
-    pwm_set_clkdiv(slice, PWM_DIVISER); //define o divisor de clock do PWM
-    pwm_set_wrap(slice, WRAP_PERIOD); //definir o valor de wrap
-    pwm_set_enabled(slice, true); //habilita o pwm no slice correspondente
+//tratamento da interrupção do PWM
+void wrapHandler(){ 
+    static int fade = 0; //nível de iluminação
+    static bool rise = true; //flag para elevar ou reduzir a iluminação
+    pwm_clear_irq(pwm_gpio_to_slice_num(LEDPin)); //resetar o flag de interrupção
+
+    if(rise){ //caso a iluminação seja elevada
+        fade++; //aumenta o nível de brilho
+        if(fade > 255){ //caso o fade seja maior que 255
+            fade = 255; //iguala fade a 255
+            rise = false; //muda o flag rise para redução do nível de iluminação
+        }
+    }
+    else{ //caso a iluminação seja reduzida
+        fade--; //reduz o nível de brilho
+        if(fade < 0){ //Icaso o fade seja menor que 0
+            fade = 0; //iguala fade a 0
+            rise = true; //muda o flag rise para elevação no nível de iluminação
+        }
+    }
+
+    pwm_set_gpio_level(LEDPin, fade * fade); //define o ciclo ativo (Ton) de forma quadrática, para acentuar a variação de luminosidade.
 }
 
+//Configuração do PWM com interrupção
+uint pwm_setup_irq(){
 
-//função principal
-int main()
-{
-    sleep_ms(2000);
-    stdio_init_all(); //inicializa o sistema padrão de I/O
-    
-    pwm_setup(); //configura o PWM
+    gpio_set_function(LEDPin, GPIO_FUNC_PWM); //habilitar o pino GPIO como PWM
+    uint sliceNum = pwm_gpio_to_slice_num(LEDPin); //obter o canal PWM da GPIO
 
-    uint up_down = 1; //variável para controlar se o nível do LED aumenta ou diminui
+    pwm_clear_irq(sliceNum); //resetar o flag de interrupção para o slice
+    pwm_set_irq_enabled(sliceNum, true); //habilitar a interrupção de PWM para um dado slice
+    irq_set_exclusive_handler(PWM_IRQ_WRAP, wrapHandler); //Definir um tipo de interrupção.
+    // Esta interrupção (PWM_IRQ_WRAP) é gerada quando um contador de um slice atinge seu valor de wrap
+    irq_set_enabled(PWM_IRQ_WRAP, true); //Habilitar ou desabilitar uma interrupção específica
 
-    //loop principal
-    while (true) {
-        
-        pwm_set_gpio_level(PWM_servo, servo_level); //define o nível atual do PWM (duty cycle)
-        printf("Ciclo ativo:%d\n", servo_level); // Imprime o duty cycle atual
-        // sleep_ms(1000); // Atraso de 1 segundo
+    pwm_config config = pwm_get_default_config(); //obtem a configuração padrão para o PWM
+    pwm_config_set_clkdiv(&config, 4.f); //define o divisor de clock do PWM
+    pwm_init(sliceNum, &config, true); //inicializa o PWM com as configurações do objeto
 
-        // if (up_down) 
-        // {
-        //     servo_level += SERVO_STEP; // Incrementa o nível do LED
-        //     if (servo_level >= WRAP_PERIOD)
-        //         up_down = 0; // Muda direção para diminuir quando atingir o período máximo
-        // }
-        // else
-        // {
-        //     servo_level -= SERVO_STEP; // Decrementa o nível do LED
-        //     if (servo_level <= SERVO_STEP)
-        //         up_down = 1; // Muda direção para aumentar quando atingir o mínimo
-        // }
+    return sliceNum;
+}
+
+int main(){
+
+    uint sliceNum = pwm_setup_irq(); //função que inicializa o PWM com interrupção por wrap
+
+    while(1){
+
+        printf("Interrupção do PWM ativa");
+        pwm_set_irq_enabled(sliceNum, true); //habilita a interrupção
+        sleep_ms(5000);
+        printf("Interrupção do  PWM desativada"); //desabilita a interrupção
+        pwm_set_irq_enabled(sliceNum, false);
+        sleep_ms(5000);
 
     }
 }
