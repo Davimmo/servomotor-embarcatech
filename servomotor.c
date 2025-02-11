@@ -2,10 +2,12 @@
 #include "pico/stdlib.h" //subconjunto central de bibliotecas do SDK Pico
 #include "hardware/pwm.h" //biblioteca para controlar o hardware de PWM
 
+//Ajustes nécessarios para colocar o clock em 50Hz que corresponde ao périodo de 20ms
+
 #define PWM_SERVO 22 //pino do LED conectado a GPIO como PWM
 const uint16_t WRAP_PERIOD = 20000; //valor máximo do contador - WRAP
 const float PWM_DIVISER = 125.f; //divisor do clock para o PWM
-const uint16_t SERVO_STEP = 5; //passo de incremento/decremento para o duty cycle do LED
+const uint16_t SERVO_STEP = 5; //passo de incremento/decremento para o duty cycle que corresponde a 5μs
 uint16_t servo_180 = WRAP_PERIOD*0.12f; //nível inicial do pwm (duty cycle)
 uint16_t servo_90 = WRAP_PERIOD*0.0735f;
 uint16_t servo_0 = WRAP_PERIOD*0.025f;
@@ -13,6 +15,7 @@ uint16_t servo_level = WRAP_PERIOD*0.025f;
 
 
 //função para configurar o módulo PWM
+
 void pwm_setup()
 {
     gpio_set_function(PWM_SERVO, GPIO_FUNC_PWM); //habilitar o pino GPIO como PWM
@@ -41,19 +44,23 @@ int main(){
 
     //loop principal
     while (true) {
-
-        // printf("Ciclo ativo:%d\n", led_level);//imprimir ciclo ativo do PWM - valor máximo é 2000
         
+        // printf("Ciclo ativo:%d\n", led_level);//imprimir ciclo ativo do PWM - valor máximo é 2000
+        pwm_set_gpio_level(PWM_SERVO, servo_level); //define o nível atual do PWM (duty cycle)
+
+
         if (up_down) 
         {
             servo_level += SERVO_STEP; // Incrementa a posição do servo
-            if (servo_level >= WRAP_PERIOD)
+            sleep_ms(10);
+            if (servo_level >= servo_180)
                 up_down = 0; // Muda direção para diminuir quando atingir o período máximo
         }
         else
         {
             servo_level -= SERVO_STEP; // Decrementa a posição do servo
-            if (servo_level <= WRAP_PERIOD)
+            sleep_ms(10);
+            if (servo_level <= servo_0)
                 up_down = 1; // Muda direção para aumentar quando atingir o mínimo
         }
 
