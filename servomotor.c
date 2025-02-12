@@ -5,6 +5,8 @@
 //Ajustes nécessarios para colocar o clock em 50Hz que corresponde ao périodo de 20ms
 
 #define PWM_SERVO 22 //pino do LED conectado a GPIO como PWM
+//Altere o valor para 12 para testar no terminal da cor azul do LED RGB da BitDogLab
+
 const uint16_t WRAP_PERIOD = 20000; //valor máximo do contador - WRAP
 const float PWM_DIVISER = 125.f; //divisor do clock para o PWM
 const uint16_t SERVO_STEP = 5; //passo de incremento/decremento para o duty cycle que corresponde a 5μs
