@@ -1,6 +1,7 @@
 # Controle de Servo Motor com Raspberry Pi Pico
 
-#Vídeo explicação do projeto
+## Vídeo explicando o projeto
+https://youtu.be/gBxNrOD1AKk
 
 
 ## Sobre o Projeto
